@@ -117,23 +117,28 @@ venv\Scripts\python.exe -m pytest backend/tests/test_postgres_concurrency.py
 
 ---
 
-## 🤖 Gemini AI Prompts
+## 🧠 AI-Powered Clinical Assistance
 
-### Pre-Visit Symptom Analysis Prompt
-```text
-System: You are an expert medical triage assistant. Analyze patient reported symptoms and output valid JSON with:
-1. "urgency_level": "Low", "Medium", or "High"
-2. "chief_complaint": Short 1-sentence summary
-3. "suggested_questions": List of 3 relevant diagnostic questions for the doctor to ask.
-```
+CareSync integrates Google Gemini to provide AI-assisted clinical workflows.
 
-### Post-Visit Summary Prompt
-```text
-System: You are a compassionate medical communicator. Convert doctor's clinical notes and prescription into a patient-friendly summary:
-1. "patient_summary": Clear, jargon-free explanation of diagnosis and plan.
-2. "medication_schedule": Formatted dosage instructions.
-3. "follow_up_steps": Bulleted list of care instructions and warning signs.
-```
+### Pre-Visit Symptom Analysis
+
+Patient-reported symptoms are analyzed to provide the doctor with:
+
+- Urgency level
+- Chief complaint summary
+- Suggested questions for the consultation
+
+### Post-Visit Summary
+
+Doctor-provided clinical notes and prescriptions are transformed into a patient-friendly summary containing:
+
+- Diagnosis and treatment explanation
+- Medication instructions
+- Follow-up steps
+- Relevant warning signs
+
+AI-generated information is intended to assist clinical workflows and does not replace professional medical judgment.
 
 ---
 
@@ -146,7 +151,6 @@ System: You are a compassionate medical communicator. Convert doctor's clinical 
 5. Add `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` to `.env`.
 
 ---
-
 ## 📧 SendGrid Email Setup
 
 1. Create a SendGrid account at [SendGrid.com](https://sendgrid.com/).

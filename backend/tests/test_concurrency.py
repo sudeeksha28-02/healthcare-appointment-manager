@@ -79,9 +79,9 @@ def test_concurrent_booking_attempts(setup_db):
     doc = TestingSessionLocal().query(Doctor).first()
     doctor_id = doc.id
     
-    # Slot details: 2026-08-24 is a Monday
-    start_time = "2026-08-24T10:00:00+00:00"
-    end_time = "2026-08-24T10:30:00+00:00"
+    # Slot details: 2026-08-31 is a Monday
+    start_time = "2026-08-31T10:00:00+00:00"
+    end_time = "2026-08-31T10:30:00+00:00"
     
     payload = {
         "doctor_id": doctor_id,

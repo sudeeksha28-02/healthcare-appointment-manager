@@ -138,7 +138,7 @@ def test_create_doctor_rbac(client, db_session):
 def test_slot_generation(client, db_session):
     doc_user = db_session.query(User).filter(User.email == "doc@test.com").first()
     
-    res = client.get(f"/api/appointments/slots?doctor_id={doc_user.id}&date_str=2026-08-24")
+    res = client.get(f"/api/appointments/slots?doctor_id={doc_user.id}&date_str=2026-08-31")
     assert res.status_code == 200
     slots = res.json()
     assert len(slots) == 16
@@ -148,11 +148,11 @@ def test_slot_generation(client, db_session):
     admin_headers = get_auth_headers(client, "admin@test.com", "adminpw")
     res_leave = client.post("/api/admin/leaves", json={
         "doctor_id": doc_user.id,
-        "leave_date": "2026-08-25"
+        "leave_date": "2026-09-01"
     }, headers=admin_headers)
     assert res_leave.status_code == 201
     
-    res_slots_leave = client.get(f"/api/appointments/slots?doctor_id={doc_user.id}&date_str=2026-08-25")
+    res_slots_leave = client.get(f"/api/appointments/slots?doctor_id={doc_user.id}&date_str=2026-09-01")
     assert res_slots_leave.status_code == 200
     assert len(res_slots_leave.json()) == 0
 
@@ -167,8 +167,8 @@ def test_booking_holds_and_conflicts(client, db_session):
     db_session.commit()
     patient2_headers = get_auth_headers(client, "patient2@test.com", "patient2pw")
     
-    start_time = "2026-08-24T10:00:00+00:00"
-    end_time = "2026-08-24T10:30:00+00:00"
+    start_time = "2026-08-31T10:00:00+00:00"
+    end_time = "2026-08-31T10:30:00+00:00"
     
     res = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
@@ -196,8 +196,8 @@ def test_expired_hold_releases_slot(client, db_session):
     doc_user = db_session.query(User).filter(User.email == "doc@test.com").first()
     patient_headers = get_auth_headers(client, "patient@test.com", "patientpw")
     
-    start_time = "2026-08-24T11:00:00+00:00"
-    end_time = "2026-08-24T11:30:00+00:00"
+    start_time = "2026-08-31T11:00:00+00:00"
+    end_time = "2026-08-31T11:30:00+00:00"
     
     res = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
@@ -233,8 +233,8 @@ def test_cancellation_and_adjacent_slots(client, db_session):
     doc_user = db_session.query(User).filter(User.email == "doc@test.com").first()
     patient_headers = get_auth_headers(client, "patient@test.com", "patientpw")
     
-    slot1_start, slot1_end = "2026-08-24T10:00:00+00:00", "2026-08-24T10:30:00+00:00"
-    slot2_start, slot2_end = "2026-08-24T10:30:00+00:00", "2026-08-24T11:00:00+00:00"
+    slot1_start, slot1_end = "2026-08-31T10:00:00+00:00", "2026-08-31T10:30:00+00:00"
+    slot2_start, slot2_end = "2026-08-31T10:30:00+00:00", "2026-08-31T11:00:00+00:00"
     
     res1 = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
@@ -268,8 +268,8 @@ def test_rescheduling_mechanisms(client, db_session):
     
     resA = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
-        "start_time": "2026-08-24T10:00:00+00:00",
-        "end_time": "2026-08-24T10:30:00+00:00"
+        "start_time": "2026-08-31T10:00:00+00:00",
+        "end_time": "2026-08-31T10:30:00+00:00"
     }, headers=patient_headers)
     apptA_id = resA.json()["id"]
     client.post(f"/api/appointments/{apptA_id}/confirm", json={"symptoms": "Flu"}, headers=patient_headers)
@@ -281,31 +281,31 @@ def test_rescheduling_mechanisms(client, db_session):
     
     resB = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
-        "start_time": "2026-08-24T10:30:00+00:00",
-        "end_time": "2026-08-24T11:00:00+00:00"
+        "start_time": "2026-08-31T10:30:00+00:00",
+        "end_time": "2026-08-31T11:00:00+00:00"
     }, headers=p2_headers)
     apptB_id = resB.json()["id"]
     client.post(f"/api/appointments/{apptB_id}/confirm", json={"symptoms": "Cough"}, headers=p2_headers)
     
     res_resched_fail = client.post(f"/api/appointments/{apptA_id}/reschedule", json={
-        "start_time": "2026-08-24T10:30:00+00:00",
-        "end_time": "2026-08-24T11:00:00+00:00"
+        "start_time": "2026-08-31T10:30:00+00:00",
+        "end_time": "2026-08-31T11:00:00+00:00"
     }, headers=patient_headers)
     assert res_resched_fail.status_code == 409
     
     apptA = db_session.query(Appointment).filter(Appointment.id == apptA_id).first()
-    assert apptA.start_time.isoformat().startswith("2026-08-24T10:00:00")
+    assert apptA.start_time.isoformat().startswith("2026-08-31T10:00:00")
     
     res_resched_ok = client.post(f"/api/appointments/{apptA_id}/reschedule", json={
-        "start_time": "2026-08-24T11:00:00+00:00",
-        "end_time": "2026-08-24T11:30:00+00:00"
+        "start_time": "2026-08-31T11:00:00+00:00",
+        "end_time": "2026-08-31T11:30:00+00:00"
     }, headers=patient_headers)
     assert res_resched_ok.status_code == 200
     
     res_hold_orig = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
-        "start_time": "2026-08-24T10:00:00+00:00",
-        "end_time": "2026-08-24T10:30:00+00:00"
+        "start_time": "2026-08-31T10:00:00+00:00",
+        "end_time": "2026-08-31T10:30:00+00:00"
     }, headers=p2_headers)
     assert res_hold_orig.status_code == 200
 
@@ -317,8 +317,8 @@ def test_doctor_leave_cascades(client, db_session):
     
     res = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
-        "start_time": "2026-08-24T09:00:00+00:00",
-        "end_time": "2026-08-24T09:30:00+00:00"
+        "start_time": "2026-08-31T09:00:00+00:00",
+        "end_time": "2026-08-31T09:30:00+00:00"
     }, headers=patient_headers)
     appt_id = res.json()["id"]
     client.post(f"/api/appointments/{appt_id}/confirm", json={"symptoms": "Cold"}, headers=patient_headers)
@@ -328,7 +328,7 @@ def test_doctor_leave_cascades(client, db_session):
     
     res_leave = client.post("/api/admin/leaves", json={
         "doctor_id": doc_user.id,
-        "leave_date": "2026-08-24"
+        "leave_date": "2026-08-31"
     }, headers=admin_headers)
     assert res_leave.status_code == 201
     
@@ -344,8 +344,8 @@ def test_doctor_leave_cascades(client, db_session):
     
     res_hold_new = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
-        "start_time": "2026-08-24T10:00:00+00:00",
-        "end_time": "2026-08-24T10:30:00+00:00"
+        "start_time": "2026-08-31T10:00:00+00:00",
+        "end_time": "2026-08-31T10:30:00+00:00"
     }, headers=patient_headers)
     assert res_hold_new.status_code == 400
     assert "on leave" in res_hold_new.json()["detail"]
@@ -376,8 +376,8 @@ def test_integrations_failures_and_retry(mock_build, mock_sg, client, db_session
     
     res = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
-        "start_time": "2026-08-24T14:00:00+00:00",
-        "end_time": "2026-08-24T14:30:00+00:00"
+        "start_time": "2026-08-31T14:00:00+00:00",
+        "end_time": "2026-08-31T14:30:00+00:00"
     }, headers=patient_headers)
     appt_id = res.json()["id"]
     
@@ -427,8 +427,8 @@ def test_llm_failures_and_medications(mock_gen_model, client, db_session):
     
     res_hold = client.post("/api/appointments/hold", json={
         "doctor_id": doc_user.id,
-        "start_time": "2026-08-24T15:00:00+00:00",
-        "end_time": "2026-08-24T15:30:00+00:00"
+        "start_time": "2026-08-31T15:00:00+00:00",
+        "end_time": "2026-08-31T15:30:00+00:00"
     }, headers=patient_headers)
     appt_id = res_hold.json()["id"]
     
@@ -445,8 +445,8 @@ def test_llm_failures_and_medications(mock_gen_model, client, db_session):
                 "dosage": "10mg",
                 "frequency": "twice daily",
                 "reminder_times": ["08:00", "20:00"],
-                "start_date": "2026-08-24",
-                "end_date": "2026-08-25"
+                "start_date": "2026-08-31",
+                "end_date": "2026-09-01"
             }
         ]
     }, headers=doctor_headers)
